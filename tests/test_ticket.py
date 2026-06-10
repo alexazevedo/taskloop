@@ -210,7 +210,7 @@ class TestWriteFrontmatter:
         assert t2.tier == t.tier
         assert t2.retry_budget == t.retry_budget
         assert t2.depends_on == t.depends_on
-        assert t2.verify == t2.verify
+        assert t2.verify == t.verify
         assert t2.parallel_safe == t.parallel_safe
         assert t2.night_batch == t.night_batch
         assert t2.escalate_to == t.escalate_to
