@@ -4,7 +4,10 @@ import argparse
 import sys
 from pathlib import Path
 
+from orc import github as github_mod
+from orc import state
 from orc import ticket as ticket_mod
+from orc.config import BadConfig, load as load_config
 from orc.log import human
 
 
@@ -60,6 +63,65 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _find_ticket(repo: Path, ticket_id: str) -> ticket_mod.Ticket | None:
+    path = repo / "tasks" / f"{ticket_id}.md"
+    if not path.exists():
+        human(f"[error] ticket not found: {path}")
+        return None
+    try:
+        return ticket_mod.parse(path)
+    except ticket_mod.MalformedTicket as e:
+        human(f"[error] malformed ticket: {e}")
+        return None
+
+
+def cmd_sync(args: argparse.Namespace) -> int:
+    repo = Path(args.repo)
+    config_path = Path(args.config)
+    try:
+        config = load_config(config_path)
+    except BadConfig as e:
+        human(f"[error] {e}")
+        return 1
+    github_mod.flush(repo, config)
+    human("sync complete.")
+    return 0
+
+
+def cmd_unblock(args: argparse.Namespace) -> int:
+    repo = Path(args.repo)
+    ticket = _find_ticket(repo, args.ticket_id)
+    if ticket is None:
+        return 1
+    if ticket.status not in {"blocked", "escalated"}:
+        human(f"[error] {ticket.id} has status {ticket.status!r}; expected blocked or escalated")
+        return 1
+    try:
+        state.transition(ticket, "ready")
+        human(f"{ticket.id} → ready")
+        return 0
+    except state.IllegalTransition as e:
+        human(f"[error] {e}")
+        return 1
+
+
+def cmd_done(args: argparse.Namespace) -> int:
+    repo = Path(args.repo)
+    ticket = _find_ticket(repo, args.ticket_id)
+    if ticket is None:
+        return 1
+    if ticket.status != "escalated":
+        human(f"[error] {ticket.id} has status {ticket.status!r}; expected escalated")
+        return 1
+    try:
+        state.transition(ticket, "done")
+        human(f"{ticket.id} → done")
+        return 0
+    except state.IllegalTransition as e:
+        human(f"[error] {e}")
+        return 1
+
+
 def cmd_not_implemented(args: argparse.Namespace) -> int:
     human("not implemented")
     return 0
@@ -68,6 +130,7 @@ def cmd_not_implemented(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="orc", description="Ticket orchestrator")
     parser.add_argument("--repo", default=".", help="Path to target repo")
+    parser.add_argument("--config", default="orchestrator.toml", help="Path to config file")
 
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("run", help="Run eligible tickets")
@@ -89,7 +152,13 @@ def main() -> None:
 
     if args.command == "status":
         sys.exit(cmd_status(args))
-    elif args.command in ("run", "sync", "unblock", "done"):
+    elif args.command == "sync":
+        sys.exit(cmd_sync(args))
+    elif args.command == "unblock":
+        sys.exit(cmd_unblock(args))
+    elif args.command == "done":
+        sys.exit(cmd_done(args))
+    elif args.command == "run":
         sys.exit(cmd_not_implemented(args))
     else:
         parser.print_help()

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from orc import escalation as escalation_mod
+from orc import github as github_mod
 from orc import harness as harness_mod
 from orc import locking
 from orc import state
@@ -132,6 +133,7 @@ def _run_ticket(ticket: ticket_mod.Ticket, repo: Path, config: "Config") -> None
         if verify_ok:
             if _commit_and_push(wt_path, ticket, n):
                 state.transition(ticket, "done")
+                github_mod.mirror("update_labels", ticket, config, repo)
                 human(f"[{ticket.id}] done after {n} attempt(s)")
                 return
             prior_errors = "commit/push failed"
@@ -140,6 +142,7 @@ def _run_ticket(ticket: ticket_mod.Ticket, repo: Path, config: "Config") -> None
 
     escalation_mod.write_report(ticket, attempts)
     state.transition(ticket, "escalated")
+    github_mod.mirror("comment", ticket, config, repo)
     human(f"[{ticket.id}] escalated after {retry_budget} attempt(s)")
 
 
@@ -159,7 +162,7 @@ def run(repo: Path, night: bool, config: "Config") -> None:
                 state.transition(t, "ready")
         worktree_mod.prune(repo)
 
-        # Flush sync queue (no-op; T-007 implements github mirror)
+        github_mod.flush(repo, config)
 
         tickets = _load_tickets(repo)
 
