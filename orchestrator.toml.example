@@ -1,0 +1,32 @@
+repo = "."                       # target repo path; --repo overrides
+wip_cap = 5
+night_wallclock_minutes = 360
+max_parallel = 3                 # max concurrent tickets within a wave
+default_branch = "main"          # never committed to directly
+memory_file = "CLAUDE.md"
+
+[timeouts]                       # seconds per attempt, by tier
+LOCAL-S = 1200
+LOCAL-L = 1800
+API-CHEAP = 900
+API-MID = 1800
+API-FRONTIER = 3600
+
+[harness."LOCAL-S"]
+command = "pi --model qwen2.5-coder:7b --endpoint http://localhost:11434 --context-file {context} --workdir {workdir}"
+
+[harness."LOCAL-L"]
+command = "pi --model qwen2.5-coder:32b --endpoint http://localhost:11434 --context-file {context} --workdir {workdir}"
+
+[harness."API-CHEAP"]
+command = "claude -p --model claude-haiku-4-5 --dangerously-skip-permissions --cwd {workdir} < {context}"
+
+[harness."API-MID"]
+command = "claude -p --model claude-sonnet-4-6 --dangerously-skip-permissions --cwd {workdir} < {context}"
+
+[harness."API-FRONTIER"]
+command = "claude -p --model claude-opus-4-8 --dangerously-skip-permissions --cwd {workdir} < {context}"
+
+[github]
+enabled = true
+repo = "owner/name"              # gh target

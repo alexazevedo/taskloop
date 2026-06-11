@@ -7,6 +7,9 @@ name = "orc"
 version = "0.1.0"
 requires-python = ">=3.12"
 
+[project.scripts]
+orc = "orc.cli:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest==8.2.*",
