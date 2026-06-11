@@ -4,8 +4,11 @@ import sys
 import time
 
 mode = os.environ.get("FAKE_MODE", "pass")
+workdir = sys.argv[2] if len(sys.argv) > 2 else "."
 
 if mode == "pass":
+    from pathlib import Path
+    (Path(workdir) / "orc-output.txt").write_text("harness success")
     print("fake harness: success")
     sys.exit(0)
 elif mode == "fail":

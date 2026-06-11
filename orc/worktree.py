@@ -11,28 +11,31 @@ def _run(cmd: list[str], cwd: Path) -> str:
     return result.stdout.strip()
 
 
-def _worktree_path(repo: Path, branch: str) -> Path:
+def path(repo: Path, branch: str) -> Path:
     slug = branch.replace("/", "-").replace(" ", "-")
     return repo / ".orc-worktrees" / slug
 
 
-def ensure(repo: Path, branch: str, base_branch: str = "main") -> Path:
-    path = _worktree_path(repo, branch)
-    if path.exists():
-        return path
+_worktree_path = path
 
-    path.parent.mkdir(parents=True, exist_ok=True)
+
+def ensure(repo: Path, branch: str, base_branch: str = "main") -> Path:
+    wt_path = path(repo, branch)
+    if wt_path.exists():
+        return wt_path
+
+    wt_path.parent.mkdir(parents=True, exist_ok=True)
 
     existing = subprocess.run(
         ["git", "branch", "--list", branch],
         capture_output=True, text=True, cwd=repo,
     )
     if existing.stdout.strip():
-        _run(["git", "worktree", "add", str(path), branch], repo)
+        _run(["git", "worktree", "add", str(wt_path), branch], repo)
     else:
-        _run(["git", "worktree", "add", "-b", branch, str(path), base_branch], repo)
+        _run(["git", "worktree", "add", "-b", branch, str(wt_path), base_branch], repo)
 
-    return path
+    return wt_path
 
 
 def reset(path: Path) -> None:
