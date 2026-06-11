@@ -1,6 +1,5 @@
 import subprocess
 import pytest
-from pathlib import Path
 
 from orc.worktree import ensure, reset, prune
 

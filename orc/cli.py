@@ -122,8 +122,17 @@ def cmd_done(args: argparse.Namespace) -> int:
         return 1
 
 
-def cmd_not_implemented(args: argparse.Namespace) -> int:
-    human("not implemented")
+def cmd_run(args: argparse.Namespace) -> int:
+    from orc.runner import run as runner_run
+
+    repo = Path(args.repo)
+    config_path = Path(args.config)
+    try:
+        config = load_config(config_path)
+    except BadConfig as e:
+        human(f"[error] {e}")
+        return 1
+    runner_run(repo, night=args.night, config=config, dry_run=args.dry_run)
     return 0
 
 
@@ -133,7 +142,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--config", default="orchestrator.toml", help="Path to config file")
 
     sub = parser.add_subparsers(dest="command")
-    sub.add_parser("run", help="Run eligible tickets")
+
+    run_p = sub.add_parser("run", help="Run eligible tickets")
+    run_p.add_argument("--night", action="store_true", help="Night run (night_batch filter)")
+    run_p.add_argument("--dry-run", action="store_true", dest="dry_run", help="Print plan only")
+
     sub.add_parser("status", help="Print ticket status table")
     sub.add_parser("sync", help="Flush sync queue")
 
@@ -159,7 +172,7 @@ def main() -> None:
     elif args.command == "done":
         sys.exit(cmd_done(args))
     elif args.command == "run":
-        sys.exit(cmd_not_implemented(args))
+        sys.exit(cmd_run(args))
     else:
         parser.print_help()
         sys.exit(1)

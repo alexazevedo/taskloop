@@ -1,9 +1,8 @@
 import json
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from orc.config import Config, HarnessConfig, GitHubConfig
+from orc.config import Config, GitHubConfig
 from orc.github import mirror, flush, _queue_path
 from orc.ticket import parse as parse_ticket
 

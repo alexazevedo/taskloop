@@ -146,7 +146,34 @@ def _run_ticket(ticket: ticket_mod.Ticket, repo: Path, config: "Config") -> None
     human(f"[{ticket.id}] escalated after {retry_budget} attempt(s)")
 
 
-def run(repo: Path, night: bool, config: "Config") -> None:
+def _print_dry_run_plan(repo: Path, night: bool, config: "Config") -> None:
+    tickets = _load_tickets(repo)
+    bad_ids = detect_cycles(tickets)
+    eligible_tickets = eligible(tickets, night=night, wip_cap=config.wip_cap)
+    waves = group_waves(eligible_tickets)
+
+    human("=== DRY RUN ===")
+    if bad_ids:
+        human(f"Cycles/missing deps: {sorted(bad_ids)}")
+    human(f"Eligible: {[t.id for t in eligible_tickets]}")
+    for wave in waves:
+        tiers = [str(t.tier) if t.tier else "?" for t in wave.tickets]
+        human(
+            f"  Wave {wave.index} ({wave.mode}): "
+            + ", ".join(f"{t.id}@{tr}" for t, tr in zip(wave.tickets, tiers))
+        )
+    if not waves:
+        human("  (no eligible tickets)")
+
+
+def run(repo: Path, night: bool, config: "Config", dry_run: bool = False) -> None:
+    if dry_run:
+        _print_dry_run_plan(repo, night, config)
+        return
+
+    run_start = time.time()
+    night_budget_s = config.night_wallclock_minutes * 60 if night else None
+
     lock = locking.acquire(repo)
 
     try:
@@ -170,13 +197,12 @@ def run(repo: Path, night: bool, config: "Config") -> None:
         if bad_ids:
             human(f"[warn] skipping tickets with cycles/missing deps: {sorted(bad_ids)}")
 
-        waves = group_waves(eligible(tickets, night=night, wip_cap=config.wip_cap))
+        any_eligible = False
+        while True:
+            if night_budget_s is not None and (time.time() - run_start) >= night_budget_s:
+                human("Night wall-clock budget exhausted; no new tickets will start.")
+                break
 
-        if not waves:
-            human("No eligible tickets.")
-            return
-
-        for wave in waves:
             tickets = _load_tickets(repo)
             wip = sum(1 for t in tickets if t.status in _WIP_STATUSES)
             if wip >= config.wip_cap:
@@ -185,6 +211,13 @@ def run(repo: Path, night: bool, config: "Config") -> None:
                     "drain the queue before more work is pulled."
                 )
                 break
+
+            waves = group_waves(eligible(tickets, night=night, wip_cap=config.wip_cap))
+            if not waves:
+                break
+
+            any_eligible = True
+            wave = waves[0]
 
             if wave.mode == "parallel":
                 with ThreadPoolExecutor(max_workers=config.max_parallel) as pool:
@@ -205,6 +238,9 @@ def run(repo: Path, night: bool, config: "Config") -> None:
             banner = escalation_mod.plan_review_check(tickets)
             if banner:
                 human(banner)
+
+        if not any_eligible:
+            human("No eligible tickets.")
 
         tickets = _load_tickets(repo)
         done = sum(1 for t in tickets if t.status == "done")

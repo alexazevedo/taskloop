@@ -2,9 +2,8 @@ import json
 import os
 import time
 import pytest
-from pathlib import Path
 
-from orc.locking import acquire, release, LockHeld, Lock
+from orc.locking import acquire, release, LockHeld
 
 
 @pytest.fixture

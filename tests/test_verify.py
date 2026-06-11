@@ -1,6 +1,4 @@
 import json
-import pytest
-from pathlib import Path
 
 from orc.verify import run
 from orc.telemetry import record

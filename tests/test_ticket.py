@@ -1,10 +1,9 @@
-import os
 import textwrap
 from pathlib import Path
 
 import pytest
 
-from orc.ticket import MalformedTicket, Ticket, parse, write_frontmatter
+from orc.ticket import MalformedTicket, parse, write_frontmatter
 
 
 SAMPLE_TICKET = textwrap.dedent("""\

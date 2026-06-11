@@ -1,6 +1,5 @@
 import sys
 import subprocess
-import pytest
 from pathlib import Path
 
 from orc.config import Config, HarnessConfig, GitHubConfig

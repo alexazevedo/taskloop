@@ -1,8 +1,7 @@
-import pytest
 from pathlib import Path
 
 from orc.ticket import Ticket
-from orc.eligibility import eligible, detect_cycles, group_waves, Wave
+from orc.eligibility import eligible, detect_cycles, group_waves
 
 
 def make_ticket(

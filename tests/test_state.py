@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from orc.state import IllegalTransition, transition
-from orc.ticket import parse, write_frontmatter
+from orc.ticket import parse
 
 
 def make_ticket(tmp_path: Path, status: str):
