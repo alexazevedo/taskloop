@@ -103,3 +103,24 @@ uv run ruff check orc tests
 ```
 
 See `docs/scheduling.md` for launchd/cron setup.
+
+## tl plugin — idea → tickets
+
+Bundled Claude Code plugin. `/tl:spec` interrogates a raw idea and writes `specs/SPEC.md`; `/tl:plan` reads the spec and writes routed task tickets to `tasks/`.
+
+### Install globally (once, all projects)
+
+```
+/plugin marketplace add aazevedo/taskloop
+/plugin install tl
+/reload-plugins
+```
+
+### Usage
+
+```
+/tl:spec <raw idea>
+# answer its questions, review specs/SPEC.md
+/tl:plan
+# tickets written to tasks/T-XXX.md, ready for orc
+```

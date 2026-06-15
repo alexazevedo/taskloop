@@ -1,0 +1,11 @@
+{
+  "name": "taskloop-marketplace",
+  "owner": "aazevedo",
+  "plugins": [
+    {
+      "name": "tl",
+      "source": "./",
+      "description": "taskloop: /tl:spec (idea to spec) and /tl:plan (spec to routed tickets)."
+    }
+  ]
+}

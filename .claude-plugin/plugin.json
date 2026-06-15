@@ -1,0 +1,6 @@
+{
+  "name": "tl",
+  "version": "0.1.0",
+  "description": "taskloop pipeline: /tl:spec turns a raw idea into a specification, /tl:plan turns it into routed, self-contained tickets for multi-model execution.",
+  "commands": ["./commands/spec.md", "./commands/plan.md"]
+}
