@@ -1,6 +1,8 @@
 {
   "name": "taskloop-marketplace",
-  "owner": "aazevedo",
+  "owner": {
+    "name": "aazevedo"
+  },
   "plugins": [
     {
       "name": "tl",
